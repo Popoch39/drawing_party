@@ -1,9 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useSelector } from 'react-redux';
 import appSlice from './features/app-slice';
+import canvasSlice from './features/canvas-slice';
+
 export const store = configureStore({
     reducer: {
-        appSlice
+        appSlice,
+        canvasSlice
     },
 });
 

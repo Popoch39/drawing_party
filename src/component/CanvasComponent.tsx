@@ -1,16 +1,54 @@
 "use client"
-import { useEffect, useState } from "react";
+import { act, useCallback, useEffect, useState } from "react";
 import { Circle, Layer, Line, Stage } from "react-konva";
 import GridCanvasComponent from "./GridCanvasComponent";
 import useZoom from "@/hooks/useZoom";
 import { KonvaEventObject } from "konva/lib/Node";
 import useDraw, { LineType } from "@/hooks/useDraw";
 import FloatingBar from "@/component/ui/FloatingBar";
+import useCanvasControls from "@/hooks/useCanvasControls";
+import { useAppSelector } from "@/redux/store";
+import { ActionsType } from "@/redux/features/canvas-slice";
 
 const CanvasComponent = () => {
+    const actionStates: ActionsType = useAppSelector((state) => state.canvasSlice.actions);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-    const { zoom, position, handleZoom, handleDrag } = useZoom();
     const { lines, handleMouseDown, handleMouseMove, handleMouseUp } = useDraw();
+
+    const handleMouseDownCanvas = (e: KonvaEventObject<MouseEvent>) => {
+        if (actionStates.drawing) {
+            handleMouseDown(e);
+        } else if (actionStates.moving) {
+            handleDragStart(e);
+        }
+    };
+
+    const handleMouseMoveCanvas = (e: KonvaEventObject<MouseEvent>) => {
+        if (actionStates.drawing) {
+            handleMouseMove(e);
+        } else if (actionStates.moving) {
+            handleDragMove(e);
+        }
+    };
+
+    const handleMouseUpCanvas = (e: KonvaEventObject<MouseEvent>) => {
+        if (actionStates.drawing) {
+            handleMouseUp();
+        } else if (actionStates.moving) {
+            handleDragEnd(e);
+        }
+    };
+
+    const {
+        stageRef,
+        position,
+        zoom,
+        handleDragStart,
+        handleDragMove,
+        handleDragEnd,
+        handleWheel
+    } = useCanvasControls();
+
     useEffect(() => {
         const updateDimensions = () => {
             setDimensions({
@@ -25,25 +63,26 @@ const CanvasComponent = () => {
         return () => window.removeEventListener('resize', updateDimensions);
     }, []);
 
-    const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
-        handleZoom(e, e.target.getStage()!);
-    };
+    useEffect(() => {
+        console.log(position.x, position.y)
+    }, [position.x, position.y])
 
     return (
         <>
             <Stage
                 width={dimensions.width}
                 height={dimensions.height}
-                scaleX={zoom}
-                scaleY={zoom}
+                onMouseDown={handleMouseDownCanvas}
+                onMouseMove={handleMouseMoveCanvas}
+                onMouseUp={handleMouseUpCanvas}
+                onMouseLeave={handleDragEnd}
+                onWheel={handleWheel}
+                ref={stageRef}
                 x={position.x}
                 y={position.y}
-                onWheel={handleWheel}
-                // draggable
-                onDragEnd={handleDrag}
-                onMouseDown={handleMouseDown}
-                onMousemove={handleMouseMove}
-                onMouseup={handleMouseUp}
+                scaleX={zoom}
+                scaleY={zoom}
+                draggable={actionStates.moving}
             >
                 <Layer>
 
@@ -54,7 +93,6 @@ const CanvasComponent = () => {
                     cellSize={100} zoom={zoom}
                     offsetX={-position.x / zoom}
                     offsetY={-position.y / zoom} /> */}
-                    <Circle x={200} y={100} radius={50} fill="green" draggable />
                     {lines.map((line: LineType, index: number) => (
                         <Line
                             key={index}
