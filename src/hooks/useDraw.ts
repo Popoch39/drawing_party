@@ -1,67 +1,52 @@
-import { useAppSelector } from "@/redux/store";
-import { KonvaEventObject } from "konva/lib/Node";
-import { Stage } from "konva/lib/Stage";
-import { Vector2d } from "konva/lib/types";
-import { useCallback, useRef, useState } from "react";
+import { useState, useRef, useCallback } from 'react';
+import { KonvaEventObject } from 'konva/lib/Node';
+import { Stage } from 'konva/lib/Stage';
+import Konva from 'konva';
+import { useAppSelector } from '@/redux/store';
 
-export type LineType = {
-    points: number[]
+interface LineType {
+    points: number[];
 }
 
-interface UseDraw {
-    (canvasPosition: Vector2d, zoom: number): {
-        lines: LineType[];
-        handleMouseDown: (e: KonvaEventObject<MouseEvent>) => void;
-        handleMouseMove: (e: KonvaEventObject<MouseEvent>) => void;
-        handleMouseUp: () => void;
-    };
-}
-
-const useDraw: UseDraw = (canvasPosition, zoom) => {
+const useDraw = () => {
     const storeDrawing = useAppSelector((state) => state.canvasSlice.actions.drawing);
     const [lines, setLines] = useState<LineType[]>([]);
     const isDrawing = useRef(false);
 
-    const adjustCoordinates = useCallback((x: number, y: number): Vector2d => {
-        return {
-            x: (x - canvasPosition.x) / zoom,
-            y: (y - canvasPosition.y) / zoom
-        };
-    }, [canvasPosition, zoom]);
-
-
     const handleMouseDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
         if (!storeDrawing) return;
         isDrawing.current = true;
-        const stage: Stage | null = e.target.getStage();
+        const stage = e.target.getStage();
         if (!stage) return;
-        const pos = stage.getPointerPosition();
+
+        const pos = stage.getRelativePointerPosition();
         if (!pos) return;
-        const adjustedPos = adjustCoordinates(pos.x, pos.y);
-        setLines((prevLines) => [...prevLines, { points: [adjustedPos.x, adjustedPos.y] }]);
-    }, [storeDrawing, adjustCoordinates]);
+
+        setLines((prevLines) => [...prevLines, { points: [pos.x, pos.y] }]);
+    }, [storeDrawing]);
 
     const handleMouseMove = useCallback((e: KonvaEventObject<MouseEvent>) => {
         if (!storeDrawing || !isDrawing.current) return;
-        const stage: Stage | null = e.target.getStage();
+        const stage = e.target.getStage();
         if (!stage) return;
-        const point = stage.getPointerPosition();
+
+        const point = stage.getRelativePointerPosition();
         if (!point) return;
-        const adjustedPos = adjustCoordinates(point.x, point.y);
-        console.log(adjustedPos);
+
         setLines((prevLines) => {
             const lastLine = prevLines[prevLines.length - 1];
             const newLastLine = {
                 ...lastLine,
-                points: [...lastLine.points, adjustedPos.x, adjustedPos.y]
+                points: [...lastLine.points, point.x, point.y]
             };
             return [...prevLines.slice(0, -1), newLastLine];
         });
-    }, [storeDrawing, adjustCoordinates]);
+    }, [storeDrawing]);
 
     const handleMouseUp = useCallback(() => {
         isDrawing.current = false;
     }, []);
+
     return { lines, handleMouseDown, handleMouseMove, handleMouseUp };
 };
 

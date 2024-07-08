@@ -49,7 +49,7 @@ const CanvasComponent = () => {
     } = useCanvasControls();
 
 
-    const { lines, handleMouseDown, handleMouseMove, handleMouseUp } = useDraw(position, zoom);
+    const { lines, handleMouseDown, handleMouseMove, handleMouseUp } = useDraw();
 
 
     useEffect(() => {
