@@ -1,15 +1,34 @@
 import { useAppSelector } from "@/redux/store";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Stage } from "konva/lib/Stage";
+import { Vector2d } from "konva/lib/types";
 import { useCallback, useRef, useState } from "react";
 
 export type LineType = {
     points: number[]
 }
-const useDraw = () => {
+
+interface UseDraw {
+    (canvasPosition: Vector2d, zoom: number): {
+        lines: LineType[];
+        handleMouseDown: (e: KonvaEventObject<MouseEvent>) => void;
+        handleMouseMove: (e: KonvaEventObject<MouseEvent>) => void;
+        handleMouseUp: () => void;
+    };
+}
+
+const useDraw: UseDraw = (canvasPosition, zoom) => {
     const storeDrawing = useAppSelector((state) => state.canvasSlice.actions.drawing);
     const [lines, setLines] = useState<LineType[]>([]);
     const isDrawing = useRef(false);
+
+    const adjustCoordinates = useCallback((x: number, y: number): Vector2d => {
+        return {
+            x: (x - canvasPosition.x) / zoom,
+            y: (y - canvasPosition.y) / zoom
+        };
+    }, [canvasPosition, zoom]);
+
 
     const handleMouseDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
         if (!storeDrawing) return;
@@ -18,8 +37,9 @@ const useDraw = () => {
         if (!stage) return;
         const pos = stage.getPointerPosition();
         if (!pos) return;
-        setLines((prevLines) => [...prevLines, { points: [pos.x, pos.y] }]);
-    }, [storeDrawing]);
+        const adjustedPos = adjustCoordinates(pos.x, pos.y);
+        setLines((prevLines) => [...prevLines, { points: [adjustedPos.x, adjustedPos.y] }]);
+    }, [storeDrawing, adjustCoordinates]);
 
     const handleMouseMove = useCallback((e: KonvaEventObject<MouseEvent>) => {
         if (!storeDrawing || !isDrawing.current) return;
@@ -27,15 +47,17 @@ const useDraw = () => {
         if (!stage) return;
         const point = stage.getPointerPosition();
         if (!point) return;
+        const adjustedPos = adjustCoordinates(point.x, point.y);
+        console.log(adjustedPos);
         setLines((prevLines) => {
             const lastLine = prevLines[prevLines.length - 1];
             const newLastLine = {
                 ...lastLine,
-                points: [...lastLine.points, point.x, point.y]
+                points: [...lastLine.points, adjustedPos.x, adjustedPos.y]
             };
             return [...prevLines.slice(0, -1), newLastLine];
         });
-    }, [storeDrawing]);
+    }, [storeDrawing, adjustCoordinates]);
 
     const handleMouseUp = useCallback(() => {
         isDrawing.current = false;

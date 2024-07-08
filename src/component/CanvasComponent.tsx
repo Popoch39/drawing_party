@@ -13,7 +13,6 @@ import { ActionsType } from "@/redux/features/canvas-slice";
 const CanvasComponent = () => {
     const actionStates: ActionsType = useAppSelector((state) => state.canvasSlice.actions);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-    const { lines, handleMouseDown, handleMouseMove, handleMouseUp } = useDraw();
 
     const handleMouseDownCanvas = (e: KonvaEventObject<MouseEvent>) => {
         if (actionStates.drawing) {
@@ -49,6 +48,10 @@ const CanvasComponent = () => {
         handleWheel
     } = useCanvasControls();
 
+
+    const { lines, handleMouseDown, handleMouseMove, handleMouseUp } = useDraw(position, zoom);
+
+
     useEffect(() => {
         const updateDimensions = () => {
             setDimensions({
@@ -62,10 +65,6 @@ const CanvasComponent = () => {
 
         return () => window.removeEventListener('resize', updateDimensions);
     }, []);
-
-    useEffect(() => {
-        console.log(position.x, position.y)
-    }, [position.x, position.y])
 
     return (
         <>
