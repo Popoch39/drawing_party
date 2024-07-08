@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ReduxProvider } from "@/redux/provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +17,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="">
-      <body className={`${inter.className} w-dvw h-dvh bg-red`}>{children}</body>
+      <ReduxProvider>
+        <body className={`${inter.className} w-dvw h-dvh bg-red`}>{children}</body>
+      </ReduxProvider>
     </html>
   );
 }
