@@ -16,7 +16,6 @@ interface CanvasControlsResult {
 
 const useCanvasControls = (initialPosition: Vector2d = { x: 0, y: 0 }): CanvasControlsResult => {
     const storeMoving = useAppSelector((state) => state.canvasSlice.actions.moving);
-    console.log(storeMoving);
     const stageRef = useRef<any>(null);
     const isDragging = useRef(false);
     const lastPosition = useRef<Vector2d | null>(null);
@@ -64,10 +63,10 @@ const useCanvasControls = (initialPosition: Vector2d = { x: 0, y: 0 }): CanvasCo
         e.evt.preventDefault();
         const stage = e.target.getStage();
         if (stage) {
-            const pointerPosition = stage.getPointerPosition();
+            const pointerPosition = stage.getRelativePointerPosition();
             if (pointerPosition) {
                 // Utiliser handleZoom de useZoom pour gérer le zoom
-                handleZoom(e.evt.deltaY > 0 ? -0.1 : 0.1, pointerPosition);
+                handleZoom(e, pointerPosition, stage);
             }
         }
     }, [handleZoom]);

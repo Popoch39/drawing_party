@@ -7,13 +7,9 @@ const useZoom = (initialZoom = 1) => {
     const [zoom, setZoom] = useState(initialZoom);
     const [position, setPosition] = useState<Vector2d>({ x: 0, y: 0 });
 
-    const handleZoom = useCallback((e: KonvaEventObject<WheelEvent>, stage: Stage) => {
-        e.evt.preventDefault();
-        if (!stage) return;
-
+    const handleZoom = useCallback((e: KonvaEventObject<WheelEvent>, pointerPosition: Vector2d, stage: Stage) => {
         const scaleBy = 1.1;
         const oldScale = stage.scaleX();
-        const pointerPosition = stage.getPointerPosition();
         if (!pointerPosition) return;
 
         const mousePointTo = {
